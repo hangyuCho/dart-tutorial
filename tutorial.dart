@@ -333,7 +333,7 @@ abstract class Describable {
   }
 }
 
-void async() {
+void async() async {
   print('################################');
   print('# async');
   print('################################');
@@ -350,7 +350,14 @@ void async() {
   print('async createDescriptions - end');
 
   var voyager = Spacecraft('Voyager I', DateTime(1977, 9, 5));
-  report(voyager, ['A', 'B', 'C', 'D', 'E']);
+  var stream = countStream(5);
+  var sum = await sumStream(stream);
+
+  var stream2 = report(voyager, ['A', 'B', 'C', 'D', 'E']);
+  await for (var val in stream2) {
+    print('report val = $val');
+  }
+
   print('');
   print('');
   print('');
@@ -388,17 +395,64 @@ Future<void> createDescriptions(Iterable<String> objects) async {
   }
 }
 
+// 비동기
+// async* / yield키워드 이용 및 비동기 합수 작성
+// 1 ~ to까지 for반복문을 사용
+// yield = return과는 달리 yield를 사용하면 함수는 반환 후 함수 내의 작업을 진행함.
+// sumStream() 호출 시 값이 전달 될 때 마다 sum변수에 갑이 누적됨.
+Stream<int> countStream(int to) async* {
+  print('param to = $to');
+
+  for (int i = 1; i <= to; i++) {
+    yield i;
+    print('countStream' 's yield');
+  }
+
+  for (int i = 1; i <= to; i++) {
+    print('just for = ${i}');
+  }
+}
+
+Future<int> sumStream(Stream<int> stream) async {
+  var sum = 0;
+  await for (var val in stream) {
+    print('sumStream = $val');
+    sum += val;
+  }
+  return sum;
+}
+
 Stream<String> report(Spacecraft craft, Iterable<String> objects) async* {
+  // async* = yield사용의 의미
+  print('report');
   for (final object in objects) {
-    await Future.delayed(oneSecond);
+    print('report = $object');
+    //await Future.delayed(oneSecond);
+    print('creftname = ${craft.name}');
     yield '${craft.name} flies by $object';
   }
 }
 
-void exceptions() {
+void exceptions() async {
   print('################################');
   print('# exceptions');
   print('################################');
+  var flybyObjects = ['Jupiter', 'Saturn', 'uranus', 'Neptune'];
+  int astronauts = 0;
+  if (astronauts == 0) {
+    throw StateError('No astronauts.');
+  }
+
+  try {
+    for (final object in flybyObjects) {
+      var description = await File('$object.txt').readAsString();
+      print(description);
+    }
+  } on IOException catch (e) {
+    print('Nothing Desc Object : $e');
+  } finally {
+    flybyObjects.clear();
+  }
   print('');
   print('');
   print('');
